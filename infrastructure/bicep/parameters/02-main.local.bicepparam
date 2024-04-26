@@ -1,6 +1,8 @@
 using '../02-main.bicep'
 import * as apimTypes from '../modules/apiManagement/apiManagementService.bicep'
 import * as eventHubTypes from '../modules/eventHub/eventHubNamespace.bicep'
+import * as serviceBusTypes from '../modules/serviceBus/serviceBusNamespace.bicep'
+import * as integrationAccountTypes from '../modules/integrationAccount/integrationAccount.bicep'
 
 param workloadName = 'ais-sk'
 param environmentName = 'loc'
@@ -43,6 +45,19 @@ param eventHubConfiguration = {
   deployEventHub: 'yes'
   serviceProperties: {
     capacityUnits: 1
+    enableZoneRedundancy: true
+  }
+}
+param serviceBusConfiguration = {
+  deployServiceBus: 'yes'
+  serviceProperties: {
+    capacityUnits: 1
     enableZoneRedundancy: false
+  }
+}
+param integrationAccountConfiguration = {
+  deployIntegrationAccount: 'yes'
+  serviceConfiguration: {
+    sku: 'Free'
   }
 }

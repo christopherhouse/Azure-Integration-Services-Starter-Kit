@@ -42,3 +42,11 @@ var eventHubNamespaceName = '${workloadName}-${environmentName}-ehns'
 var serviceBusPrivateLinkZoneName = 'privatelink.servicebus.windows.net'
 output eventHubNamespaceName string = eventHubNamespaceName
 output serviceBusPrivateLinkZoneName string = serviceBusPrivateLinkZoneName
+
+// Service Bus
+var serviceBusNamespaceName = '${workloadName}-${environmentName}-sbns'
+output serviceBusNamespaceName string = serviceBusNamespaceName
+
+// Integration Account
+var integrationAccountName = '${workloadName}-${environmentName}-ia'
+output integrationAccountName string = integrationAccountName

@@ -25,7 +25,7 @@ type eventHubDisabledConfiguration = {
 @discriminator('deployEventHub')
 type eventHubConfigurationType = eventHubEnabledConfiguration | eventHubDisabledConfiguration
 
-resource ehNs 'Microsoft.EventHub/namespaces@2024-01-01' = {
+resource ehNs 'Microsoft.EventHub/namespaces@2023-01-01-preview' = {
     name: eventHubNamespaceName
     location: region
     tags: tags
@@ -34,8 +34,9 @@ resource ehNs 'Microsoft.EventHub/namespaces@2024-01-01' = {
         capacity: eventHubConfiguration.serviceProperties.capacityUnits
     }
     properties: {
-        zoneRedundant: eventHubConfiguration.serviceProperties.enableZoneRedundancy
         publicNetworkAccess: 'Disabled'
+        minimumTlsVersion: '1.2'
+        zoneRedundant: eventHubConfiguration.serviceProperties.enableZoneRedundancy
     }
 }
 
@@ -55,9 +56,14 @@ resource diags 'Microsoft.Insights/diagnosticSettings@2021-05-01-preview' = {
     name: 'laws'
     scope: ehNs
     properties: {
+        workspaceId: logAnalyticsWorkspaceResourceId
         logs: [
             {
-                category: 'allLogs'
+                categoryGroup: 'allLogs'
+                enabled: true
+            }
+            {
+                categoryGroup: 'audit'
                 enabled: true
             }
         ]

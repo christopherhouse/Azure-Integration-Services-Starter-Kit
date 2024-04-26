@@ -2,10 +2,12 @@ param serviceBusNamespaceName string
 param location string
 param capacityUnits int = 1
 param logAnalyticsWorkspaceResourceId string
+param tags object = {}
 
 resource sbns 'Microsoft.ServiceBus/namespaces@2022-10-01-preview' = {
   name: serviceBusNamespaceName
   location: location
+  tags: tags
   sku: {
     name: 'Premium'
     tier: 'Premium'

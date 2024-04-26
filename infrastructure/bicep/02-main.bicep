@@ -1,5 +1,7 @@
 import * as apimTypes from './modules/apiManagement/apiManagementService.bicep'
 import * as eventHubTypes from './modules/eventHub/eventHubNamespace.bicep'
+import * as serviceBusTypes from './modules/serviceBus/privateServiceBusNamespace.bicep'
+import * as integrationAcctTypes from './modules/integrationAccount/integrationAccount.bicep'
 
 @description('The identifier for this workload, used to generate resource names')
 param workloadName string
@@ -21,6 +23,12 @@ param apimConfiguration apimTypes.apimConfiguration
 
 @description('The configuration for Event Hub')
 param eventHubConfiguration eventHubTypes.eventHubConfigurationType
+
+@description('The configuration for Service Bus')
+param serviceBusConfiguration serviceBusTypes.serviceBusConfigurationType
+
+@description('The configuration for Integration Account')
+param integrationAccountConfiguration integrationAcctTypes.integrationAccountConfigurationType
 
 @description('Tags to apply to all resources')
 param tags object = {}
@@ -109,7 +117,7 @@ module apim './modules/apiManagement/apiManagementService.bicep' = if(apimConfig
   }
 }
 
-module sbDns './modules/dns/privateDnsZone.bicep' = if(eventHubConfiguration.deployEventHub == 'yes') {
+module sbDns './modules/dns/privateDnsZone.bicep' = if(eventHubConfiguration.deployEventHub == 'yes' || serviceBusConfiguration.deployServiceBus == 'yes') {
   name: 'sb-dns-${deploymentName}'
   params: {
     zoneName: names.outputs.serviceBusPrivateLinkZoneName
@@ -118,7 +126,7 @@ module sbDns './modules/dns/privateDnsZone.bicep' = if(eventHubConfiguration.dep
   }
 }
 
-module eventHub './modules/eventHub/eventHubNamespace.bicep' = if(eventHubConfiguration.deployApim == 'yes') {
+module eventHub './modules/eventHub/eventHubNamespace.bicep' = if(eventHubConfiguration.deployEventHub == 'yes') {
   name: 'eventHub-${deploymentName}'
   params: {
     region: region
@@ -128,6 +136,30 @@ module eventHub './modules/eventHub/eventHubNamespace.bicep' = if(eventHubConfig
     logAnalyticsWorkspaceResourceId: law.id
     subnetResourceId: servicesSubnet.id
     vnetResourceId: vnet.id
+    tags: tags
+  }
+}
+
+module serviceBus './modules/serviceBus/privateServiceBusNamespace.bicep' = if(serviceBusConfiguration.deployServiceBus == 'yes') {
+  name: 'serviceBus-${deploymentName}'
+  params: {
+    region: region
+    serviceBusNamespaceName: names.outputs.serviceBusNamespaceName
+    dnsZoneResourceId: sbDns.outputs.id
+    logAnalyticsWorkspaceResourceId: law.id
+    serviceBusConfiguration: serviceBusConfiguration
+    subnetResourceId: servicesSubnet.id
+    tags: tags
+  }
+}
+
+module ia './modules/integrationAccount/integrationAccount.bicep' = if(integrationAccountConfiguration.deployIntegrationAccount == 'yes') {
+  name: 'integrationAccount-${deploymentName}'
+  params: {
+    region: region
+    integrationAccountName: names.outputs.integrationAccountName
+    integrationAccountConfiguration: integrationAccountConfiguration
+    logAnalyticsWorkspaceId: law.id
     tags: tags
   }
 }
