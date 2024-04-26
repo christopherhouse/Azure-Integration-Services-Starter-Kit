@@ -36,3 +36,9 @@ var apimUserAssignedManagedIdentityName = '${workloadName}-${environmentName}-ap
 output apimName string = apimName
 output apimPublicIpName string = apimPublicIpName
 output apimUserAssignedManagedIdentityName string = apimUserAssignedManagedIdentityName
+
+// Event Hub
+var eventHubNamespaceName = '${workloadName}-${environmentName}-ehns'
+var serviceBusPrivateLinkZoneName = 'privatelink.servicebus.windows.net'
+output eventHubNamespaceName string = eventHubNamespaceName
+output serviceBusPrivateLinkZoneName string = serviceBusPrivateLinkZoneName

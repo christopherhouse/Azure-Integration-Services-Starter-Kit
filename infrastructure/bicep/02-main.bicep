@@ -1,4 +1,5 @@
-import * as apimTypes from 'modules/apiManagement/apiManagementService.bicep'
+import * as apimTypes from './modules/apiManagement/apiManagementService.bicep'
+import * as eventHubTypes from './modules/eventHub/eventHubNamespace.bicep'
 
 @description('The identifier for this workload, used to generate resource names')
 param workloadName string
@@ -15,7 +16,11 @@ param region string
 @description('The subnet configurations for the virtual network')
 param subnetConfigurations subnetConfigurationsType
 
+@description('The configuration for API Management')
 param apimConfiguration apimTypes.apimConfiguration
+
+@description('The configuration for Event Hub')
+param eventHubConfiguration eventHubTypes.eventHubConfigurationType
 
 @description('Tags to apply to all resources')
 param tags object = {}
@@ -62,6 +67,11 @@ resource apimSubnet 'Microsoft.Network/virtualNetworks/subnets@2023-09-01' exist
   parent: vnet
 }
 
+resource servicesSubnet 'Microsoft.Network/virtualNetworks/subnets@2023-09-01' existing = {
+  name: subnetConfigurations.servicesSubnet.name
+  parent: vnet
+}
+
 module apimPip './modules/publicIpAddress/publicIpAddress.bicep' = {
   name: 'apim-pip-${deploymentName}'
   params: {
@@ -89,12 +99,35 @@ module apim './modules/apiManagement/apiManagementService.bicep' = if(apimConfig
     configuration: apimConfiguration
     deploymentName: deploymentName 
     keyVaulName: names.outputs.keyVaultName
-    logAnalyticsWorkspaceId: names.outputs.logAnalyticsWorkspaceName
+    logAnalyticsWorkspaceId: law.id
     publicIpResourceId: apimPip.outputs.id
     userAssignedManagedIdentityPrincipalId: apimUami.outputs.principalId
     userAssignedManagedIdentityResourceId: apimUami.outputs.id
     vnetResourceId: vnet.id
     vnetSubnetResourceId: apimSubnet.id
+    tags: tags
+  }
+}
+
+module sbDns './modules/dns/privateDnsZone.bicep' = if(eventHubConfiguration.deployEventHub == 'yes') {
+  name: 'sb-dns-${deploymentName}'
+  params: {
+    zoneName: names.outputs.serviceBusPrivateLinkZoneName
+    vnetResourceId: vnet.id
+    tags: tags
+  }
+}
+
+module eventHub './modules/eventHub/eventHubNamespace.bicep' = if(eventHubConfiguration.deployApim == 'yes') {
+  name: 'eventHub-${deploymentName}'
+  params: {
+    region: region
+    eventHubNamespaceName: names.outputs.eventHubNamespaceName
+    dnsZoneResourceId: sbDns.outputs.id
+    eventHubConfiguration: eventHubConfiguration
+    logAnalyticsWorkspaceResourceId: law.id
+    subnetResourceId: servicesSubnet.id
+    vnetResourceId: vnet.id
     tags: tags
   }
 }

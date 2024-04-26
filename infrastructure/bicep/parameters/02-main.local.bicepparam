@@ -1,5 +1,6 @@
 using '../02-main.bicep'
 import * as apimTypes from '../modules/apiManagement/apiManagementService.bicep'
+import * as eventHubTypes from '../modules/eventHub/eventHubNamespace.bicep'
 
 param workloadName = 'ais-sk'
 param environmentName = 'loc'
@@ -36,5 +37,12 @@ param apimConfiguration = {
     skuCapacity: 1
     publisherEmailAddress: 'foo.bar@bizbaz.yyz'
     publisherOrganizationName: 'Contoso'
+  }
+}
+param eventHubConfiguration = {
+  deployEventHub: 'yes'
+  serviceProperties: {
+    capacityUnits: 1
+    enableZoneRedundancy: false
   }
 }
