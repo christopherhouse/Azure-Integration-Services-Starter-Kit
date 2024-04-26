@@ -20,6 +20,9 @@ param apimConfiguration apimTypes.apimConfiguration
 @description('Tags to apply to all resources')
 param tags object = {}
 
+var lawName = '${workloadName}-${environmentName}-law'
+var vnetName = '${workloadName}-${environmentName}-vnet'
+
 @export()
 type subnetConfigurationType = {
   name: string
@@ -45,12 +48,12 @@ module names './nameProvider.bicep' = {
 }
 
 resource law 'Microsoft.OperationalInsights/workspaces@2023-09-01' existing = {
-  name: names.outputs.logAnalyticsWorkspaceName
+  name: lawName
   scope: resourceGroup()
 }
 
 resource vnet 'Microsoft.Network/virtualNetworks@2021-02-01' existing = {
-  name: names.outputs.vnetName
+  name: vnetName
   scope: resourceGroup()
 }
 
@@ -90,7 +93,6 @@ module apim './modules/apiManagement/apiManagementService.bicep' = if(apimConfig
     publicIpResourceId: apimPip.outputs.id
     userAssignedManagedIdentityPrincipalId: apimUami.outputs.principalId
     userAssignedManagedIdentityResourceId: apimUami.outputs.id
-    vnetIntegrationMode: apimConfiguration.serviceProperties.vnetIntegrationMode
     vnetResourceId: vnet.id
     vnetSubnetResourceId: apimSubnet.id
     tags: tags

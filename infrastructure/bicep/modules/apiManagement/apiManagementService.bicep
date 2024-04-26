@@ -8,10 +8,6 @@ param region string
 @discriminator('deployApim')
 param configuration apimEnabledConfiguration | apimDisabledConfiguration
 
-@description('The vnet integration mode, internal for no public gateway endpoint, external to include a public gateway endpoint')
-@allowed(['External', 'Internal'])
-param vnetIntegrationMode string
-
 @description('The resource id of the subnet to integrate with')
 param vnetSubnetResourceId string
 
@@ -68,7 +64,6 @@ type apimServiceProperties = {
   skuCapacity: int
   publisherEmailAddress : string
   publisherOrganizationName : string
-  vnetIntegrationMode : vnetIntegrationModeType
 }
 
 @export()
@@ -143,7 +138,7 @@ resource apiManagementService 'Microsoft.ApiManagement/service@2023-03-01-previe
     }
     publisherEmail: configuration.serviceProperties.publisherEmailAddress
     publisherName: configuration.serviceProperties.publisherOrganizationName
-    virtualNetworkType: vnetIntegrationMode
+    virtualNetworkType: 'Internal'
     virtualNetworkConfiguration: {
       subnetResourceId: vnetSubnetResourceId
     }

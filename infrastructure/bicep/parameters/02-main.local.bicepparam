@@ -4,6 +4,9 @@ import * as apimTypes from '../modules/apiManagement/apiManagementService.bicep'
 param workloadName = 'ais-sk'
 param environmentName = 'loc'
 param region = 'eastus'
+param tags = {
+  Project_Name: 'AIS Stater Kit'
+}
 param subnetConfigurations = {
   apimSubnet: {
     addressPrefix: '10.254.0.248/29'
