@@ -2,7 +2,7 @@
 param privateEndpointName string
 
 @description('The region where the private endpoint will be created')
-param location string
+param region string
 
 @description('The ID of the subnet where the private endpoint will be created')
 param subnetId string
@@ -23,7 +23,7 @@ var nicName = '${privateEndpointName}-nic'
 
 resource pe 'Microsoft.Network/privateEndpoints@2023-06-01' = {
   name: privateEndpointName
-  location: location
+  location: region
   tags: tags
   properties: {
     customNetworkInterfaceName: nicName

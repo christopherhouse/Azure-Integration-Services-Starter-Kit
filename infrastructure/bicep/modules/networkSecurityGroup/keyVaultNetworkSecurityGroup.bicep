@@ -2,7 +2,7 @@
 param networkSecurityGroupName string
 
 @description('The Azure region where the network security group should be created')
-param location string
+param region string
 
 @description('The ID of the Log Analytics workspace to send diagnostic logs to')
 param logAnalyticsWorkspaceId string
@@ -22,7 +22,7 @@ param tags object = {}
 resource nsg 'Microsoft.Network/networkSecurityGroups@2023-09-01' = {
   name: networkSecurityGroupName
   tags: tags
-  location: location
+  location: region
   properties: {
     securityRules: [
       {

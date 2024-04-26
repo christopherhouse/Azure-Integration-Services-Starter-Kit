@@ -2,7 +2,7 @@
 param keyVaultName string
 
 @description('The region where the Key Vault will be created')
-param location string
+param region string
 
 @description('The resource id of the log analytics workspace to send logs to')
 param logAnalyticsWorkspaceResourceId string
@@ -14,18 +14,18 @@ param vnetName string
 param servicesSubnetResourceId string
 
 @description('Deployment identifier, used to ensure uniqueness of deployment names')
-param deploymentId string
+param deploymentName string
 
 @description('The tags to associate with the API Center resource')
 param tags object = {}
 
-var kvDeploymentName = '${keyVaultName}-private-kv-${deploymentId}'
+var kvDeploymentName = '${keyVaultName}-private-kv-${deploymentName}'
 
 var kvDnsZoneName = 'privatelink.vaultcore.azure.net'
-var kvDnsZoneDeploymentName = '${kvDnsZoneName}-${deploymentId}'
+var kvDnsZoneDeploymentName = '${kvDnsZoneName}-${deploymentName}'
 
 var kvPeName = '${keyVaultName}-pe'
-var kvPeDeploymentName = '${kvPeName}-${deploymentId}'
+var kvPeDeploymentName = '${kvPeName}-${deploymentName}'
 
 resource vnet 'Microsoft.Network/virtualNetworks@2023-09-01' existing = {
   name: vnetName
@@ -35,7 +35,7 @@ resource vnet 'Microsoft.Network/virtualNetworks@2023-09-01' existing = {
 module kv './keyVault.bicep' = {
   name: kvDeploymentName
   params: {
-    location: location
+    region: region
     keyVaultName: keyVaultName
     logAnalyticsWorkspaceResourceId: logAnalyticsWorkspaceResourceId
     tags: tags
@@ -54,7 +54,7 @@ module kvDns '../dns/privateDnsZone.bicep' = {
 module kvPe '../privateEndpoint/privateEndpoint.bicep' = {
   name: kvPeDeploymentName
   params: {
-    location: location
+    region: region
     dnsZoneId: kvDns.outputs.id
     groupId: 'vault'
     privateEndpointName: kvPeName

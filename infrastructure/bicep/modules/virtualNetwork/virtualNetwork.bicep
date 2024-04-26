@@ -2,7 +2,7 @@
 param virtualNetworkName string
 
 @description('The Azure region where the virtual network will be created')
-param location string
+param region string
 
 @description('The address prefixes for the virtual network')
 param addressPrefixes array // Array of strings, ie ['10.0.0.0/24', '192.168.0.1']
@@ -31,9 +31,8 @@ type subnetConfigurationType = {
 
 @export()
 type subnetConfigurationsType = {
-  appServiceOutboundSubnet: subnetConfigurationType
-  appServiceInboundSubnet: subnetConfigurationType
-  keyVaultSubnet: subnetConfigurationType
+  appServiceSubnet: subnetConfigurationType
+  servicesSubnet: subnetConfigurationType
   apimSubnet: subnetConfigurationType
   appGwSubnet: subnetConfigurationType
 }
@@ -41,56 +40,42 @@ type subnetConfigurationsType = {
 resource vnet 'Microsoft.Network/virtualNetworks@2023-09-01' = {
   name: virtualNetworkName
   tags: tags
-  location: location
+  location: region
   properties: {
     addressSpace: {
       addressPrefixes: addressPrefixes
     }
     subnets: [
       {
-        name: subnetConfiguration.appServiceOutboundSubnet.name
+        name: subnetConfiguration.appServiceSubnet.name
         properties: {
-          addressPrefix: subnetConfiguration.appServiceOutboundSubnet.addressPrefix
-          delegations: subnetConfiguration.appServiceOutboundSubnet.delegation == 'none' ? [] : [
+          addressPrefix: subnetConfiguration.appServiceSubnet.addressPrefix
+          delegations: subnetConfiguration.appServiceSubnet.delegation == 'none' ? [] : [
             {
-              name: subnetConfiguration.appServiceOutboundSubnet.delegation
+              name: subnetConfiguration.appServiceSubnet.delegation
               properties: {
-                serviceName: subnetConfiguration.appServiceOutboundSubnet.delegation
+                serviceName: subnetConfiguration.appServiceSubnet.delegation
               }
             }
           ]
         }
       }
       {
-        name: subnetConfiguration.appServiceInboundSubnet.name
+        name: subnetConfiguration.servicesSubnet.name
         properties: {
-          addressPrefix: subnetConfiguration.appServiceInboundSubnet.addressPrefix
-          delegations: subnetConfiguration.appServiceInboundSubnet.delegation == 'none' ? [] : [
+          addressPrefix: subnetConfiguration.servicesSubnet.addressPrefix
+          delegations: subnetConfiguration.servicesSubnet.delegation == 'none' ? [] : [
             {
-              name: subnetConfiguration.appServiceInboundSubnet.delegation
+              name: subnetConfiguration.servicesSubnet.delegation
               properties: {
-                serviceName: subnetConfiguration.appServiceInboundSubnet.delegation
-              }
-            }
-          ]
-        }
-      }
-      {
-        name: subnetConfiguration.keyVaultSubnet.name
-        properties: {
-          addressPrefix: subnetConfiguration.keyVaultSubnet.addressPrefix
-          delegations: subnetConfiguration.keyVaultSubnet.delegation == 'none' ? [] : [
-            {
-              name: subnetConfiguration.keyVaultSubnet.delegation
-              properties: {
-                serviceName: subnetConfiguration.keyVaultSubnet.delegation
+                serviceName: subnetConfiguration.servicesSubnet.delegation
   
               }
             }
           ]
-          networkSecurityGroup: {
-            id: keyVaultNsgResourceId
-          }
+          // networkSecurityGroup: {
+          //   id: keyVaultNsgResourceId
+          // }
         }
       }
       {
@@ -133,4 +118,4 @@ resource vnet 'Microsoft.Network/virtualNetworks@2023-09-01' = {
 
 output id string = vnet.id
 output name string = vnet.name
-output kvSubnetId string = vnet.properties.subnets[2].id
+output servicesSubnetId string = vnet.properties.subnets[1].id
