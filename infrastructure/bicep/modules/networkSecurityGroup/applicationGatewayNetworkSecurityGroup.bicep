@@ -2,7 +2,7 @@
 param networkSecurityGroupName string
 
 @description('The location where the network security group will be created')
-param location string
+param region string
 
 @description('The resource ID of the Log Analytics workspace to send diagnostic logs to')
 param logAnalyticsWorkspaceResourceId string
@@ -16,7 +16,7 @@ param tags object = {}
 resource nsg 'Microsoft.Network/networkSecurityGroups@2023-09-01' = {
   name: networkSecurityGroupName
   tags: tags
-  location: location
+  location: region
   properties: {
     securityRules: [
       {

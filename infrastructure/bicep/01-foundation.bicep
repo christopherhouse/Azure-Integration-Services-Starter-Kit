@@ -48,7 +48,7 @@ module names './nameProvider.bicep' = {
 module law './modules/logAnalytics/logAnalyticsWorkspace.bicep' = {
   name: 'law-${deploymentName}'
   params: {
-    location: region
+    region: region
     logAnalyticsWorkspaceName: names.outputs.logAnalyticsWorkspaceName
     retentionInDays: logAnalyticsWorkspaceRetentionInDays
     tags: tags
@@ -58,7 +58,7 @@ module law './modules/logAnalytics/logAnalyticsWorkspace.bicep' = {
 module apimNsg './modules/networkSecurityGroup/apimNetworkSecurityGroup.bicep' = {
   name: 'apimNsg-${deploymentName}'
   params: {
-    location: region
+    region: region
     apimSubnetRange: subnetConfigurations.apimSubnet.addressPrefix
     appGatewaySubnetRange: subnetConfigurations.appGwSubnet.addressPrefix
     logAnalyticsWorkspaceResourceId: law.outputs.id
@@ -70,12 +70,62 @@ module apimNsg './modules/networkSecurityGroup/apimNetworkSecurityGroup.bicep' =
 module kvNsg './modules/networkSecurityGroup/keyVaultNetworkSecurityGroup.bicep' = {
   name: 'kvNsg-${deploymentName}'
   params: {
-    location: region
+    region: region
     logAnalyticsWorkspaceId: law.outputs.id
     apimSubnetRange: subnetConfigurations.apimSubnet.addressPrefix
     appGatewaySubnetRange: subnetConfigurations.appGwSubnet.addressPrefix
     keyVaultSubnetRange: subnetConfigurations.servicesSubnet.addressPrefix
     networkSecurityGroupName: names.outputs.keyVaultNsgName
+    tags: tags
+  }
+}
+
+module appGwNsg './modules/networkSecurityGroup/applicationGatewayNetworkSecurityGroup.bicep' = {
+  name: 'appGwNsg-${deploymentName}'
+  params: {
+    region: region
+    appGatewaySubnetAddressSpace: subnetConfigurations.appGwSubnet.addressPrefix
+    logAnalyticsWorkspaceResourceId: law.outputs.id
+    networkSecurityGroupName: names.outputs.appGwNsgName
+    tags: tags
+  }
+}
+
+module vnet './modules/virtualNetwork/virtualNetwork.bicep' = {
+  name: 'vnet-${deploymentName}'
+  params: {
+    addressPrefixes: virtualNetworkAddressSpaces
+    apimNsgResourceId: apimNsg.outputs.id
+    appGwNsgResourceId: appGwNsg.outputs.id
+    keyVaultNsgResourceId: kvNsg.outputs.id
+    subnetConfiguration: subnetConfigurations
+    region: region
+    virtualNetworkName: names.outputs.vnetName
+    tags: tags
+  }
+}
+
+module kv './modules/keyVault/privateKeyVault.bicep' = {
+  name: 'kv-${deploymentName}'
+  params: {
+    region: region
+    deploymentName: deploymentName
+    keyVaultName: names.outputs.keyVaultName
+    logAnalyticsWorkspaceResourceId: law.outputs.id
+    servicesSubnetResourceId: vnet.outputs.servicesSubnetId
+    vnetName: vnet.outputs.name
+    tags: tags
+  }
+}
+
+module ai './modules/applicationInsights/applicationInsights.bicep' = {
+  name: 'ai-${deploymentName}'
+  params: {
+    appInsightsName: names.outputs.appInsightsName
+    deploymentName: deploymentName
+    keyVaultName: kv.outputs.name
+    logAnalyticsWorkspaceId: law.outputs.id
+    region: region
     tags: tags
   }
 }

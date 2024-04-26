@@ -2,7 +2,7 @@
 param keyVaultName string
 
 @description('The region where the Key Vault will be created')
-param location string
+param region string
 
 @description('The resource id of the log analytics workspace to send logs to')
 param logAnalyticsWorkspaceResourceId string
@@ -13,7 +13,7 @@ param tags object = {}
 resource kv 'Microsoft.KeyVault/vaults@2023-07-01' = {
   name: keyVaultName
   tags: tags
-  location: location
+  location: region
   properties: {
     sku: {
       name: 'standard'

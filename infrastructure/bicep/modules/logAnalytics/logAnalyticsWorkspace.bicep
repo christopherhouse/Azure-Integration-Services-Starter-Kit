@@ -2,7 +2,7 @@
 param logAnalyticsWorkspaceName string
 
 @description('The Azure region in which to create the Log Analytics workspace')
-param location string
+param region string
 
 @description('The number of days to retain data in the Log Analytics workspace')
 param retentionInDays int
@@ -13,7 +13,7 @@ param tags object = {}
 resource laws 'Microsoft.OperationalInsights/workspaces@2022-10-01' = {
   name: logAnalyticsWorkspaceName
   tags: tags
-  location: location
+  location: region
   properties: {
     retentionInDays: retentionInDays
     sku: {
