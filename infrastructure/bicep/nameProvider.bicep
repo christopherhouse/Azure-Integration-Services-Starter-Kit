@@ -28,3 +28,11 @@ output appInsightsName string = appInsightsName
 // Key Vault
 var keyVaultName = '${workloadName}-${environmentName}-kv'
 output keyVaultName string = keyVaultName
+
+// API Management
+var apimName = '${workloadName}-${environmentName}-apim'
+var apimPublicIpName = '${workloadName}-${environmentName}-apim-pip'
+var apimUserAssignedManagedIdentityName = '${workloadName}-${environmentName}-apim-uami'
+output apimName string = apimName
+output apimPublicIpName string = apimPublicIpName
+output apimUserAssignedManagedIdentityName string = apimUserAssignedManagedIdentityName

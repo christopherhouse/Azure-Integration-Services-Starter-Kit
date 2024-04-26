@@ -2,20 +2,11 @@
 param apiManagementServiceName string
 
 @description('The region where the new API Management resource will be created')
-param location string
+param region string
 
-@description('The name of the SKU to provision')
-@allowed(['Developer', 'Premium']) // Only allow SKUs that support vnet integration
-param skuName string
-
-@description('The number of scale units to provision')
-param skuCapacity int
-
-@description('The email address associated with the publisher.  This value can be used as the send-from address for email notifications')
-param publisherEmailAddress string
-
-@description('THe name of that API publisher\'s organization.  This value is used in the developer portal and for email notifications')
-param publisherOrganizationName string
+@description('The configuration for the API Management resource')
+@discriminator('deployApim')
+param configuration apimEnabledConfiguration | apimDisabledConfiguration
 
 @description('The vnet integration mode, internal for no public gateway endpoint, external to include a public gateway endpoint')
 @allowed(['External', 'Internal'])
@@ -42,9 +33,6 @@ param logAnalyticsWorkspaceId string
 @description('The resource id of the virtual network that will be used to integrate with APIM')
 param vnetResourceId string
 
-@description('An array of hostname configurations that will be used to configure the APIM instance')
-param hostNameConfigurations hostNameConfigurationsType = []
-
 @description('A flag indicating whether the APIM instance should be zone redundant')
 param zoneRedundant bool = false
 
@@ -52,7 +40,36 @@ param zoneRedundant bool = false
 param tags object = {}
 
 @description('The unique identifier for the deployment')
-param deploymentId string
+param deploymentName string
+
+@export()
+@discriminator('deployApim')
+type apimConfiguration = apimEnabledConfiguration | apimDisabledConfiguration
+
+@export()
+type apimEnabledConfiguration = {
+  deployApim: 'yes'
+  serviceProperties: {
+    skuName: apimSkuType
+    skuCapacity: int
+    publisherEmailAddress : string
+    publisherOrganizationName : string
+  }
+}
+
+@export()
+type apimDisabledConfiguration = {
+  deployApim: 'no'
+}
+
+@export()
+type apimServiceProperties = {
+  skuName: apimSkuType
+  skuCapacity: int
+  publisherEmailAddress : string
+  publisherOrganizationName : string
+  vnetIntegrationMode : vnetIntegrationModeType
+}
 
 @export()
 type hostNameConfigurationType = {
@@ -62,15 +79,15 @@ type hostNameConfigurationType = {
 }
 
 @export()
-type hostNameConfigurationsType = hostNameConfigurationType[]
+@description('The type of SKU to provision')
+type apimSkuType = 'Developer' | 'Premium'
 
-var hostNameConfigs = [for hostNameConfig in hostNameConfigurations: {
-  certificateSource: 'KeyVault'
-  hostName: hostNameConfig.hostName
-  //identityClientId: userAssignedManagedIdentityClientId
-  keyVaultId: hostNameConfig.keyVaultSecretUrl
-  type: hostNameConfig.type
-}]
+@export()
+@description('The vnet integration mode, internal for no public gateway endpoint, external to include a public gateway endpoint')
+type vnetIntegrationModeType = 'External' | 'Internal'
+
+@export()
+type hostNameConfigurationsType = hostNameConfigurationType[]
 
 var kvSecretsUserRoleId = '4633458b-17de-408a-b874-0445c86b69e6'
 
@@ -109,7 +126,7 @@ resource kvRoleAssignmentSMI 'Microsoft.Authorization/roleAssignments@2022-04-01
 resource apiManagementService 'Microsoft.ApiManagement/service@2023-03-01-preview' = {
   name: apiManagementServiceName
   tags: tags
-  location: location
+  location: region
   identity: {
     type: 'SystemAssigned, UserAssigned'
     userAssignedIdentities: {
@@ -117,16 +134,15 @@ resource apiManagementService 'Microsoft.ApiManagement/service@2023-03-01-previe
     }
   }
   sku: {
-    name: skuName
-    capacity: skuCapacity
+    name: configuration.serviceProperties.skuName
+    capacity: configuration.serviceProperties.skuCapacity
   }
   properties: {
     apiVersionConstraint: {
       minApiVersion: '2021-08-01' // Security best practice, restricts access to mgmt API
     }
-    hostnameConfigurations: hostNameConfigs
-    publisherEmail: publisherEmailAddress
-    publisherName: publisherOrganizationName
+    publisherEmail: configuration.serviceProperties.publisherEmailAddress
+    publisherName: configuration.serviceProperties.publisherOrganizationName
     virtualNetworkType: vnetIntegrationMode
     virtualNetworkConfiguration: {
       subnetResourceId: vnetSubnetResourceId
@@ -155,7 +171,7 @@ resource diags 'Microsoft.Insights/diagnosticSettings@2021-05-01-preview' = {
 }
 
 module dns '../dns/privateDnsZone.bicep' = {
-  name: '${apiManagementService.name}-dns-${deploymentId}'
+  name: '${apiManagementService.name}-dns-${deploymentName}'
   params: {
     vnetResourceId: vnetResourceId
     zoneName: 'azure-api.net'
@@ -164,7 +180,7 @@ module dns '../dns/privateDnsZone.bicep' = {
 }
 
 module aRecords '../dns/aRecord.bicep' = {
-  name: '${apiManagementService.name}-dns-a-records-${deploymentId}'
+  name: '${apiManagementService.name}-dns-a-records-${deploymentName}'
   params: {
     zoneName: dns.outputs.zoneName
     ipAddress: apiManagementService.properties.privateIPAddresses[0]

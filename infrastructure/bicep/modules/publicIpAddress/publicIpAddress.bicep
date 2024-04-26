@@ -5,7 +5,7 @@ param publicIpAddressName string
 param dnsLabel string = publicIpAddressName
 
 @description('The region where the Public IP Address will be created')
-param location string
+param region string
 
 @description('A flag indicating whether the IP address will be zone redundant')
 param zoneRedundant bool = false
@@ -21,7 +21,7 @@ var zones = zoneRedundant ? ['1', '2', '3'] : []
 resource pip 'Microsoft.Network/publicIPAddresses@2019-11-01' = {
   name: publicIpAddressName
   tags: tags
-  location: location
+  location: region
   sku: {
     name: 'Standard'
   }
