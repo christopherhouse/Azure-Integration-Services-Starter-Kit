@@ -4,8 +4,16 @@ param workloadName string
 @description('The identifier for the environment, used to generate resource names')
 param environmentName string
 
-@description('The identifier for the deployment, used to generate deployment names')
-param deploymentName string
-
 var vnetName = '${workloadName}-${environmentName}-vnet'
-var vnetDeploymentName = '${vnetName}-${deploymentName}'
+output vnetName string = vnetName
+
+var apimNsgName = '${workloadName}-${environmentName}-apim-nsg'
+var appGwNsgName = '${workloadName}-${environmentName}-appgw-nsg'
+var keyVaultNsgName = '${workloadName}-${environmentName}-kv-nsg'
+
+output apimNsgName string = apimNsgName
+output appGwNsgName string = appGwNsgName
+output keyVaultNsgName string = keyVaultNsgName
+
+var logAnalyticsWorkspaceName = '${workloadName}-${environmentName}-law'
+output logAnalyticsWorkspaceName string = logAnalyticsWorkspaceName
