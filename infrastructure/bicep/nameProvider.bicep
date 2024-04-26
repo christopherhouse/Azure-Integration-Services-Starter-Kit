@@ -17,3 +17,6 @@ output keyVaultNsgName string = keyVaultNsgName
 
 var logAnalyticsWorkspaceName = '${workloadName}-${environmentName}-law'
 output logAnalyticsWorkspaceName string = logAnalyticsWorkspaceName
+
+var appInsightsName = '${workloadName}-${environmentName}-ai'
+output appInsightsName string = appInsightsName
