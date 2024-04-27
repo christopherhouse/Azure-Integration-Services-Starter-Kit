@@ -3,6 +3,8 @@ import * as apimTypes from '../modules/apiManagement/apiManagementService.bicep'
 import * as eventHubTypes from '../modules/eventHub/eventHubNamespace.bicep'
 import * as serviceBusTypes from '../modules/serviceBus/serviceBusNamespace.bicep'
 import * as integrationAccountTypes from '../modules/integrationAccount/integrationAccount.bicep'
+import * as dataFactoryTypes from '../modules/dataFactory/dataFactory.bicep'
+import * as acrTypes from '../modules/containerRegistry/containerRegistry.bicep'
 
 param workloadName = 'ais-sk'
 param environmentName = 'loc'
@@ -63,4 +65,10 @@ param integrationAccountConfiguration = {
 }
 param dataFactoryConfiguration = {
   deployDataFactory: 'yes'
+}
+param acrConfiguration = {
+  deployAcr: 'yes'
+  serviceProperties: {
+    enableZoneRedundancy: false
+  }
 }

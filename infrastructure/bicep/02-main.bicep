@@ -3,6 +3,7 @@ import * as eventHubTypes from './modules/eventHub/eventHubNamespace.bicep'
 import * as serviceBusTypes from './modules/serviceBus/privateServiceBusNamespace.bicep'
 import * as integrationAcctTypes from './modules/integrationAccount/integrationAccount.bicep'
 import * as adfTypes from './modules/dataFactory/dataFactory.bicep'
+import * as acrTypes from './modules/containerRegistry/containerRegistry.bicep'
 
 @description('The identifier for this workload, used to generate resource names')
 param workloadName string
@@ -33,6 +34,9 @@ param integrationAccountConfiguration integrationAcctTypes.integrationAccountCon
 
 @description('The configuration for Data Factory')
 param dataFactoryConfiguration adfTypes.dataFactoryConfigurationType
+
+@description('The configuration for Container Registry')
+param acrConfiguration acrTypes.acrConfigurationType
 
 @description('Tags to apply to all resources')
 param tags object = {}
@@ -174,6 +178,7 @@ module ia './modules/integrationAccount/integrationAccount.bicep' = if(integrati
   }
 }
 
+// Data Factory
 module adf './modules/dataFactory/dataFactory.bicep' = if(dataFactoryConfiguration.deployDataFactory == 'yes') {
   name: 'adf-${deploymentName}'
   params: {
@@ -181,6 +186,28 @@ module adf './modules/dataFactory/dataFactory.bicep' = if(dataFactoryConfigurati
     dataFactoryName: names.outputs.dataFactoryName
     region: region
     logAnalyticsWorkspaceResourceId: law.id
+    tags: tags
+  }
+}
+
+module acrDns './modules/dns/privateDnsZone.bicep' = if(acrConfiguration.deployAcr == 'yes') {
+  name: 'acr-dns-${deploymentName}'
+  params: {
+    zoneName: names.outputs.acrPrivateLinkZoneName
+    vnetResourceId: vnet.id
+    tags: tags
+  }
+}
+
+module acr './modules/containerRegistry/containerRegistry.bicep' = if(acrConfiguration.deployAcr == 'yes') {
+  name: 'acr-${deploymentName}'
+  params: {
+    acrConfiguration: acrConfiguration
+    acrName: names.outputs.acrName
+    dnsZoneResourceId: acrDns.outputs.id
+    logAnalyticsWorkspaceResourceId: law.id
+    region: region
+    subnetResourceId: servicesSubnet.id
     tags: tags
   }
 }

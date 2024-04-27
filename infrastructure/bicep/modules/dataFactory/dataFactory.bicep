@@ -74,3 +74,5 @@ resource diags 'Microsoft.Insights/diagnosticSettings@2021-05-01-preview' = {
 
 output id string = df.id
 output name string = df.name
+// This is useless but it elimintates the unused variable warning for dataFactoryConfiguration
+output deployDataFactory string = dataFactoryConfiguration.deployDataFactory
