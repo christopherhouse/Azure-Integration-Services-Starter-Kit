@@ -50,3 +50,7 @@ output serviceBusNamespaceName string = serviceBusNamespaceName
 // Integration Account
 var integrationAccountName = '${workloadName}-${environmentName}-ia'
 output integrationAccountName string = integrationAccountName
+
+// Data Factory
+var dataFactoryName = '${workloadName}-${environmentName}-df'
+output dataFactoryName string = dataFactoryName

@@ -2,6 +2,7 @@ import * as apimTypes from './modules/apiManagement/apiManagementService.bicep'
 import * as eventHubTypes from './modules/eventHub/eventHubNamespace.bicep'
 import * as serviceBusTypes from './modules/serviceBus/privateServiceBusNamespace.bicep'
 import * as integrationAcctTypes from './modules/integrationAccount/integrationAccount.bicep'
+import * as adfTypes from './modules/dataFactory/dataFactory.bicep'
 
 @description('The identifier for this workload, used to generate resource names')
 param workloadName string
@@ -29,6 +30,9 @@ param serviceBusConfiguration serviceBusTypes.serviceBusConfigurationType
 
 @description('The configuration for Integration Account')
 param integrationAccountConfiguration integrationAcctTypes.integrationAccountConfigurationType
+
+@description('The configuration for Data Factory')
+param dataFactoryConfiguration adfTypes.dataFactoryConfigurationType
 
 @description('Tags to apply to all resources')
 param tags object = {}
@@ -80,6 +84,7 @@ resource servicesSubnet 'Microsoft.Network/virtualNetworks/subnets@2023-09-01' e
   parent: vnet
 }
 
+// Public IP Address for APIM
 module apimPip './modules/publicIpAddress/publicIpAddress.bicep' = {
   name: 'apim-pip-${deploymentName}'
   params: {
@@ -90,6 +95,7 @@ module apimPip './modules/publicIpAddress/publicIpAddress.bicep' = {
   }
 }
 
+// User Assigned Managed Identity for APIM
 module apimUami './modules/managedIdentity/userAssignedManagedIdentity.bicep' = if(apimConfiguration.deployApim == 'yes') {
   name: 'apim-uami-${deploymentName}'
   params: {
@@ -99,6 +105,7 @@ module apimUami './modules/managedIdentity/userAssignedManagedIdentity.bicep' = 
   }
 }
 
+// API Management
 module apim './modules/apiManagement/apiManagementService.bicep' = if(apimConfiguration.deployApim == 'yes') {
   name: 'apim-${deploymentName}'
   params: {
@@ -117,6 +124,7 @@ module apim './modules/apiManagement/apiManagementService.bicep' = if(apimConfig
   }
 }
 
+// Service Bus + Event Hub DNS
 module sbDns './modules/dns/privateDnsZone.bicep' = if(eventHubConfiguration.deployEventHub == 'yes' || serviceBusConfiguration.deployServiceBus == 'yes') {
   name: 'sb-dns-${deploymentName}'
   params: {
@@ -126,6 +134,7 @@ module sbDns './modules/dns/privateDnsZone.bicep' = if(eventHubConfiguration.dep
   }
 }
 
+// Event Hub
 module eventHub './modules/eventHub/eventHubNamespace.bicep' = if(eventHubConfiguration.deployEventHub == 'yes') {
   name: 'eventHub-${deploymentName}'
   params: {
@@ -135,11 +144,11 @@ module eventHub './modules/eventHub/eventHubNamespace.bicep' = if(eventHubConfig
     eventHubConfiguration: eventHubConfiguration
     logAnalyticsWorkspaceResourceId: law.id
     subnetResourceId: servicesSubnet.id
-    vnetResourceId: vnet.id
     tags: tags
   }
 }
 
+// Service Bus
 module serviceBus './modules/serviceBus/privateServiceBusNamespace.bicep' = if(serviceBusConfiguration.deployServiceBus == 'yes') {
   name: 'serviceBus-${deploymentName}'
   params: {
@@ -153,6 +162,7 @@ module serviceBus './modules/serviceBus/privateServiceBusNamespace.bicep' = if(s
   }
 }
 
+// Integration Account
 module ia './modules/integrationAccount/integrationAccount.bicep' = if(integrationAccountConfiguration.deployIntegrationAccount == 'yes') {
   name: 'integrationAccount-${deploymentName}'
   params: {
@@ -160,6 +170,17 @@ module ia './modules/integrationAccount/integrationAccount.bicep' = if(integrati
     integrationAccountName: names.outputs.integrationAccountName
     integrationAccountConfiguration: integrationAccountConfiguration
     logAnalyticsWorkspaceId: law.id
+    tags: tags
+  }
+}
+
+module adf './modules/dataFactory/dataFactory.bicep' = if(dataFactoryConfiguration.deployDataFactory == 'yes') {
+  name: 'adf-${deploymentName}'
+  params: {
+    dataFactoryConfiguration: dataFactoryConfiguration
+    dataFactoryName: names.outputs.dataFactoryName
+    region: region
+    logAnalyticsWorkspaceResourceId: law.id
     tags: tags
   }
 }

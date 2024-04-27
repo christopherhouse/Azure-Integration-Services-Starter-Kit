@@ -61,3 +61,6 @@ param integrationAccountConfiguration = {
     sku: 'Free'
   }
 }
+param dataFactoryConfiguration = {
+  deployDataFactory: 'yes'
+}

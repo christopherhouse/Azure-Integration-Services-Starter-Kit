@@ -1,6 +1,5 @@
 param eventHubNamespaceName string
 param region string
-param vnetResourceId string
 param subnetResourceId string
 param dnsZoneResourceId string
 param logAnalyticsWorkspaceResourceId string
