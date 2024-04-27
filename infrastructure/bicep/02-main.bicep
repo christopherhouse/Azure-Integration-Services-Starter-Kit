@@ -178,7 +178,25 @@ module ia './modules/integrationAccount/integrationAccount.bicep' = if(integrati
   }
 }
 
-// Data Factory
+// Data Factory + DNS
+module adfDns './modules/dns/privateDnsZone.bicep' = if(dataFactoryConfiguration.deployDataFactory == 'yes') {
+  name: 'adf-dns-${deploymentName}'
+  params: {
+    zoneName: names.outputs.dataFactoryPrivateLinkZoneName
+    vnetResourceId: vnet.id
+    tags: tags
+  }
+}
+
+module adfPortalDns './modules/dns/privateDnsZone.bicep' = if(dataFactoryConfiguration.deployDataFactory == 'yes') {
+  name: 'adf-portal-dns-${deploymentName}'
+  params: {
+    zoneName: names.outputs.dataFactoryPortalPrivateLinkZoneName
+    vnetResourceId: vnet.id
+    tags: tags
+  }
+}
+
 module adf './modules/dataFactory/dataFactory.bicep' = if(dataFactoryConfiguration.deployDataFactory == 'yes') {
   name: 'adf-${deploymentName}'
   params: {
@@ -186,10 +204,14 @@ module adf './modules/dataFactory/dataFactory.bicep' = if(dataFactoryConfigurati
     dataFactoryName: names.outputs.dataFactoryName
     region: region
     logAnalyticsWorkspaceResourceId: law.id
+    adfDnsZoneResourceId: adfDns.outputs.id
+    adfPortalDnsZoneResourceId: adfPortalDns.outputs.id
+    subnetResourceId: servicesSubnet.id
     tags: tags
   }
 }
 
+// Container Registry + DNS
 module acrDns './modules/dns/privateDnsZone.bicep' = if(acrConfiguration.deployAcr == 'yes') {
   name: 'acr-dns-${deploymentName}'
   params: {

@@ -10,6 +10,15 @@ param logAnalyticsWorkspaceResourceId string
 @description('The configuration for the Azure Data Factory')
 param dataFactoryConfiguration dataFactoryConfigurationType
 
+@description('The resource ID of the Azure Data Factory DNS zone')
+param adfDnsZoneResourceId string
+
+@description('The resource ID of the Azure Data Factory Portal DNS zone')
+param adfPortalDnsZoneResourceId string
+
+@description('The resource ID of the Azure Data Factory subnet')
+param subnetResourceId string
+
 @description('The tags to apply to the Azure Data Factory')
 param tags object = {}
 
@@ -29,6 +38,8 @@ type dataFactoryDisabledConfigurationType = {
 type dataFactoryConfigurationType = dataFactoryEnabledConfigurationType | dataFactoryDisabledConfigurationType
 
 var dataFactoryUamiName = '${dataFactoryName}-uami'
+var dataFactoryPrivateEndpointName = '${dataFactoryName}-adf-pe'
+var datafactoryPortalPrivateEndpointName = '${dataFactoryName}-portal-pe'
 
 resource uami 'Microsoft.ManagedIdentity/userAssignedIdentities@2023-07-31-preview' = {
   name: dataFactoryUamiName
@@ -56,6 +67,32 @@ resource dfMvn 'Microsoft.DataFactory/factories/managedVirtualNetworks@2018-06-0
   name: 'managed-vnet'
   parent: df
   properties: {}
+}
+
+module adfPe '../privateEndpoint/privateEndpoint.bicep' = {
+  name: '${dataFactoryPrivateEndpointName}-${deployment().name}'
+  params: {
+    dnsZoneId: adfDnsZoneResourceId
+    groupId: 'dataFactory'
+    privateEndpointName: dataFactoryPrivateEndpointName
+    region: region
+    subnetId: subnetResourceId
+    targetResourceId: df.id
+    tags: tags
+  }
+}
+
+module portalPe '../privateEndpoint/privateEndpoint.bicep' = {
+  name: '${datafactoryPortalPrivateEndpointName}-${deployment().name}'
+  params: {
+    dnsZoneId: adfPortalDnsZoneResourceId
+    groupId: 'portal'
+    privateEndpointName: datafactoryPortalPrivateEndpointName
+    region: region
+    subnetId: subnetResourceId
+    targetResourceId: df.id
+    tags: tags
+  }
 }
 
 resource diags 'Microsoft.Insights/diagnosticSettings@2021-05-01-preview' = {

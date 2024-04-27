@@ -55,6 +55,11 @@ output integrationAccountName string = integrationAccountName
 var dataFactoryName = '${workloadName}-${environmentName}-df'
 output dataFactoryName string = dataFactoryName
 
+var dataFactoryPrivateLinkZoneName = 'privatelink.datafactory.azure.net'
+var dataFactoryPortalPrivateLinkZoneName = 'privatelink.adf.azure.com'
+output dataFactoryPrivateLinkZoneName string = dataFactoryPrivateLinkZoneName
+output dataFactoryPortalPrivateLinkZoneName string = dataFactoryPortalPrivateLinkZoneName
+
 // Container Registry
 var acrName = replace(toLower('${workloadName}${environmentName}acr'), '-', '')
 output acrName string = acrName
