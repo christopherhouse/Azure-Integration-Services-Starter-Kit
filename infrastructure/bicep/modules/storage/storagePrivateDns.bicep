@@ -1,4 +1,3 @@
-param buildId string
 param vnetResourceId string
 
 var blobDnsZone = 'privatelink.blob.${environment().suffixes.storage}'
@@ -6,10 +5,10 @@ var fileDnsZone = 'privatelink.file.${environment().suffixes.storage}'
 var queueDnsZone = 'privatelink.queue.${environment().suffixes.storage}'
 var tableDnsZone = 'privatelink.table.${environment().suffixes.storage}'
 
-var blobDnsZoneDeploymentName = '${blobDnsZone}-${buildId}'
-var fileDnsZoneDeploymentName = '${fileDnsZone}-${buildId}'
-var queueDnsZoneDeploymentName = '${queueDnsZone}-${buildId}'
-var tableDnsZoneDeploymentName = '${tableDnsZone}-${buildId}'
+var blobDnsZoneDeploymentName = '${blobDnsZone}-${deployment().name}'
+var fileDnsZoneDeploymentName = '${fileDnsZone}-${deployment().name}'
+var queueDnsZoneDeploymentName = '${queueDnsZone}-${deployment().name}'
+var tableDnsZoneDeploymentName = '${tableDnsZone}-${deployment().name}'
 
 module blobDns '../dns/privateDnsZone.bicep' = {
   name: blobDnsZoneDeploymentName

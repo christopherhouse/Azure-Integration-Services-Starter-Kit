@@ -28,3 +28,50 @@ output appInsightsName string = appInsightsName
 // Key Vault
 var keyVaultName = '${workloadName}-${environmentName}-kv'
 output keyVaultName string = keyVaultName
+
+// API Management
+var apimName = '${workloadName}-${environmentName}-apim'
+var apimPublicIpName = '${workloadName}-${environmentName}-apim-pip'
+var apimUserAssignedManagedIdentityName = '${workloadName}-${environmentName}-apim-uami'
+output apimName string = apimName
+output apimPublicIpName string = apimPublicIpName
+output apimUserAssignedManagedIdentityName string = apimUserAssignedManagedIdentityName
+
+// Event Hub
+var eventHubNamespaceName = '${workloadName}-${environmentName}-ehns'
+var serviceBusPrivateLinkZoneName = 'privatelink.servicebus.windows.net'
+output eventHubNamespaceName string = eventHubNamespaceName
+output serviceBusPrivateLinkZoneName string = serviceBusPrivateLinkZoneName
+
+// Service Bus
+var serviceBusNamespaceName = '${workloadName}-${environmentName}-sbns'
+output serviceBusNamespaceName string = serviceBusNamespaceName
+
+// Integration Account
+var integrationAccountName = '${workloadName}-${environmentName}-ia'
+output integrationAccountName string = integrationAccountName
+
+// Data Factory
+var dataFactoryName = '${workloadName}-${environmentName}-df'
+output dataFactoryName string = dataFactoryName
+
+var dataFactoryPrivateLinkZoneName = 'privatelink.datafactory.azure.net'
+var dataFactoryPortalPrivateLinkZoneName = 'privatelink.adf.azure.com'
+output dataFactoryPrivateLinkZoneName string = dataFactoryPrivateLinkZoneName
+output dataFactoryPortalPrivateLinkZoneName string = dataFactoryPortalPrivateLinkZoneName
+
+// Container Registry
+var acrName = replace(toLower('${workloadName}${environmentName}acr'), '-', '')
+output acrName string = acrName
+
+var acrPrivateLinkZoneName = 'privatelink.azurecr.io'
+output acrPrivateLinkZoneName string = acrPrivateLinkZoneName
+
+// App Service Plans + ASE + DNS
+var aseName = '${workloadName}-${environmentName}-ase'
+output aseName string = aseName
+
+var appServiceSitesPrivateLinkDnsZoneName = 'privatelink.azurewebsites.net'
+var appServiceScmPrivateLinkDnsZoneName = 'scm.privatelink.azurewebsites.net'
+output appServiceSitesPrivateLinkDnsZoneName string = appServiceSitesPrivateLinkDnsZoneName
+output appServiceScmPrivateLinkDnsZoneName string = appServiceScmPrivateLinkDnsZoneName

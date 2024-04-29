@@ -1,47 +1,70 @@
+@description('The name of the Service Bus namespace to create')
 param serviceBusNamespaceName string
-param location string
-param capacityUnits int = 1
+
+@description('The Azure region in which to create the Service Bus namespace')
+param region string
+
+@description('The resource ID of the Log Analytics workspace to use for diagnostics')
 param logAnalyticsWorkspaceResourceId string
-param deployPrivateDns bool = false
-param vnetResourceId string
+
+@description('The resource ID of the DNS zone to use for private endpoint DNS configuration')
+param dnsZoneResourceId string
+
+@description('The resource ID of the subnet in which to create the private endpoint')
 param subnetResourceId string
-param buildId string
 
-var sbnsDeploymentName = '${serviceBusNamespaceName}-private-deployment-${buildId}'
-var sbnsPeDeploymentName = '${serviceBusNamespaceName}-pe-${buildId}'
-var dnsDeploymentName = 'privatelink-servicebus-windows-net-dns-${buildId}'
+@description('The configuration for the Service Bus namespace')
+param serviceBusConfiguration serviceBusConfigurationType
 
-var dnsZoneName = 'privatelink.servicebus.windows.net'
-var sbnsPeName = '${serviceBusNamespaceName}-pe'
+@description('The tags to apply to the Service Bus namespace and private endpoint')
+param tags object = {}
 
-module dns '../dns/privateDnsZone.bicep' = if(deployPrivateDns) {
-  name: dnsDeploymentName
-  params: {
-    zoneName: dnsZoneName
-    vnetResourceId: vnetResourceId
-  }
-
+@export()
+type serviceBusEnabledConfigurationType = {
+  deployServiceBus: 'yes'
+  serviceProperties: serviceBusServiceConfigurationType
 }
+
+@export()
+type serviceBusServiceConfigurationType = {
+  capacityUnits: int
+  enableZoneRedundancy: bool
+}
+
+@export()
+type serviceBusDisabledConfigurationType = {
+  deployServiceBus: 'no'
+}
+
+@discriminator('deployServiceBus')
+@export()
+type serviceBusConfigurationType = serviceBusEnabledConfigurationType | serviceBusDisabledConfigurationType
+
+var sbnsDeploymentName = '${serviceBusNamespaceName}-private-deployment-${deployment().name}'
+var sbnsPeDeploymentName = '${serviceBusNamespaceName}-pe-${deployment().name}'
+var sbnsPeName = '${serviceBusNamespaceName}-pe'
 
 module sbns './serviceBusNamespace.bicep' = {
   name: sbnsDeploymentName
   params: {
-    location: location
-    capacityUnits: capacityUnits
+    location: region
+    capacityUnits: serviceBusConfiguration.serviceProperties.capacityUnits
     logAnalyticsWorkspaceResourceId: logAnalyticsWorkspaceResourceId
     serviceBusNamespaceName: serviceBusNamespaceName
+    tags: tags
   }
 }
 
 module pe '../privateEndpoint/privateEndpoint.bicep' = {
   name: sbnsPeDeploymentName
   params: {
-    dnsZoneId: dns.outputs.id
+    dnsZoneId: dnsZoneResourceId
     groupId: 'namespace'
-    location: location
+    region: region
     privateEndpointName: sbnsPeName
     subnetId: subnetResourceId
     targetResourceId: sbns.outputs.id
+    tags: tags
   }
 }
 
