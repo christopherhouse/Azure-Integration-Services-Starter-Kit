@@ -20,8 +20,8 @@ jobs:
     - name: Run PSRule analysis
       uses: microsoft/ps-rule@main
       with:
-        inputType: repository                                        # Optional. Determines the type of input to use for PSRule. 'repository or 'inputPath'
-        #inputPath: string                                            # Optional. The path PSRule will look for files to validate.
+        inputType: 'inputPath'                                        # Optional. Determines the type of input to use for PSRule. 'repository or 'inputPath'
+        #inputPath: './infrastructure/bicep'                                            # Optional. The path PSRule will look for files to validate.
         modules: 'PSRule.Rules.Azure'                                              # Optional. A comma separated list of modules to use for analysis.
         #source: string                                               # Optional. A path containing rules to use for analysis.
         baseline: 'Azure.GA_2024_03'                                             # Optional. The name of a PSRule baseline to use.
@@ -35,3 +35,8 @@ jobs:
         #repository: string                                           # Optional. The name of the PowerShell repository where PSRule modules are installed from.
         summary: true                                             # Optional. Determines if a job summary is written.
         #version: string                                              # Optional. The specific version of PSRule to use.
+
+    - name: Upload results to security tab
+      uses: github/codeql-action/upload-sarif@v2
+      with:
+        sarif_file: reports/ps-rule-results.sarif
