@@ -3,6 +3,8 @@ on:
   push:
     branches:
     - '*'
+  workflow_dispatch:
+
 # Comment
 jobs:
   scan:
@@ -14,14 +16,7 @@ jobs:
     steps:
     - name: Checkout
       uses: actions/checkout@v2
-    # Use PSRule action to scan Bicep files
-    # in the path ./infrastructure/bicep
-    - name: PSRule scan
-      uses: Azure/ps-rule-action@v0
-      with:
-        target: './infrastructure/bicep'
-        output: 'psrule-results.json'
-        format: 'json'
+
     - name: Run PSRule analysis
       uses: microsoft/ps-rule@main
       with:
