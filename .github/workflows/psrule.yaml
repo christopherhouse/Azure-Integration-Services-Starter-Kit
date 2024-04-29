@@ -21,9 +21,9 @@ jobs:
     - name: Run PSRule analysis
       uses: microsoft/ps-rule@main
       with:
-        inputType: 'inputPath'                                        # Optional. Determines the type of input to use for PSRule. 'repository or 'inputPath'
-        inputPath: '/infrastructure/bicep'                                            # Optional. The path PSRule will look for files to validate.
-        modules: 'PSRule.Rules.Azure'                                              # Optional. A comma separated list of modules to use for analysis.
+        inputType: 'repository'                                        # Optional. Determines the type of input to use for PSRule. 'repository or 'inputPath'
+        #inputPath: '/infrastructure/bicep'                                            # Optional. The path PSRule will look for files to validate.
+        modules: 'PSRule.Rules.Azure, PSRule.Rules.CAF'                                              # Optional. A comma separated list of modules to use for analysis.
         #source: string                                               # Optional. A path containing rules to use for analysis.
         baseline: 'Azure.GA_2024_03'                                             # Optional. The name of a PSRule baseline to use.
         #conventions: string                                          # Optional. A comma separated list of conventions to use.
