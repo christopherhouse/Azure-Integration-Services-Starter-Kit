@@ -2,7 +2,8 @@ name: 'PSRule scan for Bicep'
 on:
   push:
     branches:
-    - '*'
+    - 'main'
+    - 'feature/*'
   workflow_dispatch:
 
 # Comment
