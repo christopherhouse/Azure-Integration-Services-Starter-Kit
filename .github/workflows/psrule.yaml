@@ -3,6 +3,8 @@ on:
   push:
     branches:
     - '*'
+  workflow_dispatch:
+
 # Comment
 jobs:
   scan:
@@ -14,7 +16,7 @@ jobs:
     steps:
     - name: Checkout
       uses: actions/checkout@v2
-      
+
     - name: Run PSRule analysis
       uses: microsoft/ps-rule@main
       with:
