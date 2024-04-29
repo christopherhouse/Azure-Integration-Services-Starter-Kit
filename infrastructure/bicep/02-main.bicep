@@ -1,4 +1,5 @@
-import * as apimTypes from './modules/apiManagement/apiManagementService.bicep'
+import * as udt from './types.bicep'
+
 import * as eventHubTypes from './modules/eventHub/eventHubNamespace.bicep'
 import * as serviceBusTypes from './modules/serviceBus/privateServiceBusNamespace.bicep'
 import * as integrationAcctTypes from './modules/integrationAccount/integrationAccount.bicep'
@@ -18,10 +19,10 @@ param deploymentName string = deployment().name
 param region string
 
 @description('The subnet configurations for the virtual network')
-param subnetConfigurations subnetConfigurationsType
+param subnetConfigurations udt.subnetConfigurationsType
 
 @description('The configuration for API Management')
-param apimConfiguration apimTypes.apimConfiguration
+param apimConfiguration udt.apimConfiguration
 
 @description('The configuration for Event Hub')
 param eventHubConfiguration eventHubTypes.eventHubConfigurationType
@@ -38,26 +39,19 @@ param dataFactoryConfiguration adfTypes.dataFactoryConfigurationType
 @description('The configuration for Container Registry')
 param acrConfiguration acrTypes.acrConfigurationType
 
+@description('The configuration for App Service Plans')
+param appServicePlansConfiguration udt.appServicePlanConfigurationType
+
+@description('The name of the key vault to use for secrets')
+param keyVaultName string
+
+param logicAppDeploymentConfiguration udt.logicAppDeploymentConfigurationType
+
 @description('Tags to apply to all resources')
 param tags object = {}
 
 var lawName = '${workloadName}-${environmentName}-law'
 var vnetName = '${workloadName}-${environmentName}-vnet'
-
-@export()
-type subnetConfigurationType = {
-  name: string
-  addressPrefix: string
-  delegation: string
-}
-
-@export()
-type subnetConfigurationsType = {
-  appServiceSubnet: subnetConfigurationType
-  servicesSubnet: subnetConfigurationType
-  apimSubnet: subnetConfigurationType
-  appGwSubnet: subnetConfigurationType
-}
 
 // Names: everything depends on this
 module names './nameProvider.bicep' = {
@@ -85,6 +79,16 @@ resource apimSubnet 'Microsoft.Network/virtualNetworks/subnets@2023-09-01' exist
 
 resource servicesSubnet 'Microsoft.Network/virtualNetworks/subnets@2023-09-01' existing = {
   name: subnetConfigurations.servicesSubnet.name
+  parent: vnet
+}
+
+resource appSvcPeSubnet 'Microsoft.Network/virtualNetworks/subnets@2023-09-01' existing = {
+  name: subnetConfigurations.appServicePrivateEndpointSubnet.name
+  parent: vnet
+}
+
+resource appSvcVniSubnet 'Microsoft.Network/virtualNetworks/subnets@2023-09-01' existing = {
+  name: subnetConfigurations.appServiceVnetIntegrationSubnet.name
   parent: vnet
 }
 
@@ -233,3 +237,120 @@ module acr './modules/containerRegistry/containerRegistry.bicep' = if(acrConfigu
     tags: tags
   }
 }
+
+// Storage + DNS
+module storageDns './modules/storage/storagePrivateDns.bicep' = {
+  name: 'storage-dns-${deploymentName}'
+  params: {
+    vnetResourceId: vnet.id
+  }
+}
+
+// App Service Plans + ASE + DNS
+
+// Only deploy app service DNS zones if not configured to use ASE
+module appSvcSitesDns './modules/dns/privateDnsZone.bicep' = if(appServicePlansConfiguration.deployAppServicePlans == 'yes' && !appServicePlansConfiguration.serviceProperties.useAppServiceEnvironment) {
+  name: 'appSvcSites-dns-${deploymentName}'
+  params: {
+    zoneName: names.outputs.appServiceSitesPrivateLinkDnsZoneName
+    vnetResourceId: vnet.id
+    tags: tags
+  }
+}
+
+module appSvcScmDns './modules/dns/privateDnsZone.bicep' = if(appServicePlansConfiguration.deployAppServicePlans == 'yes' && !appServicePlansConfiguration.serviceProperties.useAppServiceEnvironment) {
+  name: 'appSvcScm-dns-${deploymentName}'
+  params: {
+    zoneName: names.outputs.appServiceScmPrivateLinkDnsZoneName
+    vnetResourceId: vnet.id
+    tags: tags
+  }
+}
+
+module ase './modules/appService/appServiceEnvironmentV3.bicep' = if(appServicePlansConfiguration.deployAppServicePlans == 'yes' && appServicePlansConfiguration.serviceProperties.useAppServiceEnvironment) {
+  name: 'ase-${deploymentName}'
+  params: {
+    aseName: names.outputs.aseName
+    region: region
+    aseSubnetResourceId: appSvcVniSubnet.id
+    logAnalyticsWorkspaceResourceId: law.id
+    tags: tags
+  }
+}
+
+module aseDns './modules/dns/privateDnsZone.bicep' = if(appServicePlansConfiguration.deployAppServicePlans == 'yes' && appServicePlansConfiguration.serviceProperties.useAppServiceEnvironment) {
+  name: 'ase-dns-${deploymentName}'
+  params: {
+    zoneName: ase.outputs.dnsSuffix
+    vnetResourceId: vnet.id
+    tags: tags
+  }
+}
+
+// App Service Plans
+#disable-next-line BCP179
+module plans './modules/appService/appServicePlan.bicep' = [for plan in appServicePlansConfiguration.serviceProperties.plans: if(appServicePlansConfiguration.deployAppServicePlans == 'yes' && !appServicePlansConfiguration.serviceProperties.useAppServiceEnvironment) {
+  name: 'app-service-plans-${deploymentName}'
+  params: {
+   appServicePlanName: plan.planName
+   region: region
+   skuName: plan.sku
+   skuCapacity: plan.skuCapacity
+   zoneRedundant: plan.zoneRedundant
+   tags: tags
+  }
+}]
+
+var logicAppCfg = {
+  deployToAppServiceEnvironment: appServicePlansConfiguration.deployAppServicePlans == 'yes' && appServicePlansConfiguration.serviceProperties.useAppServiceEnvironment ? 'yes' : 'no'
+  appServicePlanResourceId: plans[0].outputs.id
+  siteDnsZoneResourceId: appSvcSitesDns.outputs.id
+  scmDnsZoneResourceId: appSvcScmDns.outputs.id
+  privateEndpointSubnetId: appSvcPeSubnet.id
+  vnetIntegrationSubnetId: appSvcVniSubnet.id
+}
+
+#disable-next-line BCP179
+module la './modules/appService/logicApp/privateLogicApp.bicep' = [for logicApp in logicAppDeploymentConfiguration.logicApps: {
+  name: 'la-${deploymentName}'
+  params: {
+    region: region
+    logAnalyticsWorkspaceResourceId: law.id
+    appServicePlanResourceId: '' // TODO: Fix
+    tags: tags
+    blobDnsZoneResourceId: storageDns.outputs.blobDnsZoneId
+    fileDnsZoneResourceId: storageDns.outputs.fileDnsZoneId
+    queueDnsZoneResourceId: storageDns.outputs.queueDnsZoneId
+    tableDnsZoneResourceId: storageDns.outputs.tableDnsZoneId
+    logicAppName: ''
+    appInsightsConnectionStringSecretUri: ''
+    appInsightsInstrumentationKeySecretUri: ''
+    storageSubnetResourceId: servicesSubnet.id
+    storageAccountConfiguration: {
+      accessTier: 'Hot'
+      sku: 'Standard_LRS'
+      fileShares: [
+        {
+          name: 'la-content'
+          quota: 1024
+        }
+      ]
+      addConnectionStringToKeyVault: true
+    }
+    keyVaultName: keyVaultName
+    logicAppConfiguration: appServicePlansConfiguration.serviceProperties.useAppServiceEnvironment ? {
+        deployToAppServiceEnvironment: 'no'
+        appServicePlanResourceId: '' // TODO: Fix
+        siteDnsZoneResourceId: appSvcSitesDns.outputs.id
+        scmDnsZoneResourceId: appSvcScmDns.outputs.id
+        privateEndpointSubnetId: appSvcPeSubnet.id
+        vnetIntegrationSubnetId: appSvcVniSubnet.id
+      } : {
+        deployToAppServiceEnvironment: 'yes'
+        aseResourceId: ase.outputs.id
+        appServicePlanResourceId: plans[0].outputs.id
+    }      
+  }
+}]
+
+func getAspResourceId(plans array, planName string) string => filter(plans, plan => plan.outputs.name == planName)[0].outputs.id

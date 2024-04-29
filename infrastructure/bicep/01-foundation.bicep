@@ -1,3 +1,5 @@
+import * as udt from './types.bicep'
+
 @description('The identifier for this workload, used to generate resource names')
 param workloadName string
 
@@ -17,7 +19,7 @@ param logAnalyticsWorkspaceRetentionInDays int = 90
 param virtualNetworkAddressSpaces array
 
 @description('The subnet configurations for the virtual network')
-param subnetConfigurations subnetConfigurationsType
+param subnetConfigurations udt.subnetConfigurationsType
 
 @description('The tags to apply to the resources')
 param tags object = {}
@@ -27,14 +29,6 @@ type subnetConfigurationType = {
   name: string
   addressPrefix: string
   delegation: string
-}
-
-@export()
-type subnetConfigurationsType = {
-  appServiceSubnet: subnetConfigurationType
-  servicesSubnet: subnetConfigurationType
-  apimSubnet: subnetConfigurationType
-  appGwSubnet: subnetConfigurationType
 }
 
 module names './nameProvider.bicep' = {
@@ -97,7 +91,6 @@ module vnet './modules/virtualNetwork/virtualNetwork.bicep' = {
     addressPrefixes: virtualNetworkAddressSpaces
     apimNsgResourceId: apimNsg.outputs.id
     appGwNsgResourceId: appGwNsg.outputs.id
-    keyVaultNsgResourceId: kvNsg.outputs.id
     subnetConfiguration: subnetConfigurations
     region: region
     virtualNetworkName: names.outputs.vnetName

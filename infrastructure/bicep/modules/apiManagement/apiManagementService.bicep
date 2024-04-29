@@ -1,3 +1,5 @@
+import * as udt from '../../types.bicep'
+
 @description('The name of the API Management resource that will be created')
 param apiManagementServiceName string
 
@@ -6,7 +8,7 @@ param region string
 
 @description('The configuration for the API Management resource')
 @discriminator('deployApim')
-param configuration apimEnabledConfiguration | apimDisabledConfiguration
+param configuration udt.apimConfiguration
 
 @description('The resource id of the subnet to integrate with')
 param vnetSubnetResourceId string
@@ -37,52 +39,6 @@ param tags object = {}
 
 @description('The unique identifier for the deployment')
 param deploymentName string
-
-@export()
-@discriminator('deployApim')
-type apimConfiguration = apimEnabledConfiguration | apimDisabledConfiguration
-
-@export()
-type apimEnabledConfiguration = {
-  deployApim: 'yes'
-  serviceProperties: {
-    skuName: apimSkuType
-    skuCapacity: int
-    publisherEmailAddress : string
-    publisherOrganizationName : string
-  }
-}
-
-@export()
-type apimDisabledConfiguration = {
-  deployApim: 'no'
-}
-
-@export()
-type apimServiceProperties = {
-  skuName: apimSkuType
-  skuCapacity: int
-  publisherEmailAddress : string
-  publisherOrganizationName : string
-}
-
-@export()
-type hostNameConfigurationType = {
-  hostName: string
-  keyVaultSecretUrl: string
-  type: 'Proxy' | 'Portal' | 'Scm' | 'Management'
-}
-
-@export()
-@description('The type of SKU to provision')
-type apimSkuType = 'Developer' | 'Premium'
-
-@export()
-@description('The vnet integration mode, internal for no public gateway endpoint, external to include a public gateway endpoint')
-type vnetIntegrationModeType = 'External' | 'Internal'
-
-@export()
-type hostNameConfigurationsType = hostNameConfigurationType[]
 
 var kvSecretsUserRoleId = '4633458b-17de-408a-b874-0445c86b69e6'
 

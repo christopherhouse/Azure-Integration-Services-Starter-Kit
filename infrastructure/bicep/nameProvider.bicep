@@ -66,3 +66,12 @@ output acrName string = acrName
 
 var acrPrivateLinkZoneName = 'privatelink.azurecr.io'
 output acrPrivateLinkZoneName string = acrPrivateLinkZoneName
+
+// App Service Plans + ASE + DNS
+var aseName = '${workloadName}-${environmentName}-ase'
+output aseName string = aseName
+
+var appServiceSitesPrivateLinkDnsZoneName = 'privatelink.azurewebsites.net'
+var appServiceScmPrivateLinkDnsZoneName = 'scm.privatelink.azurewebsites.net'
+output appServiceSitesPrivateLinkDnsZoneName string = appServiceSitesPrivateLinkDnsZoneName
+output appServiceScmPrivateLinkDnsZoneName string = appServiceScmPrivateLinkDnsZoneName

@@ -1,11 +1,13 @@
 param aseName string
-param location string
+param region string
 param aseSubnetResourceId string
 param logAnalyticsWorkspaceResourceId string
+param tags object
 
 resource ase 'Microsoft.Web/hostingEnvironments@2023-01-01' = {
   name: aseName
-  location: location
+  location: region
+  tags: tags
   kind: 'ASEV3'
   properties: {
     internalLoadBalancingMode: 'Web, Publishing'

@@ -1,3 +1,5 @@
+import * as udt from '../../types.bicep'
+
 @description('The name of the virtual network')
 param virtualNetworkName string
 
@@ -8,7 +10,7 @@ param region string
 param addressPrefixes array // Array of strings, ie ['10.0.0.0/24', '192.168.0.1']
 
 @description('The subnet configurations for the virtual network')
-param subnetConfiguration subnetConfigurationsType
+param subnetConfiguration udt.subnetConfigurationsType
 
 @description('The resource ID of the network security group to associate with the API Management subnet')
 param apimNsgResourceId string
@@ -16,26 +18,8 @@ param apimNsgResourceId string
 @description('The resource ID of the network security group to associate with the API Management subnet')
 param appGwNsgResourceId string
 
-@description('The resource ID of the network security group to associate with the Key Vault subnet')
-param keyVaultNsgResourceId string
-
 @description('The tags to associate with the API Center resource')
 param tags object = {}
-
-@export()
-type subnetConfigurationType = {
-  name: string
-  addressPrefix: string
-  delegation: string
-}
-
-@export()
-type subnetConfigurationsType = {
-  appServiceSubnet: subnetConfigurationType
-  servicesSubnet: subnetConfigurationType
-  apimSubnet: subnetConfigurationType
-  appGwSubnet: subnetConfigurationType
-}
 
 resource vnet 'Microsoft.Network/virtualNetworks@2023-09-01' = {
   name: virtualNetworkName
@@ -47,17 +31,32 @@ resource vnet 'Microsoft.Network/virtualNetworks@2023-09-01' = {
     }
     subnets: [
       {
-        name: subnetConfiguration.appServiceSubnet.name
+        name: subnetConfiguration.appServicePrivateEndpointSubnet.name
         properties: {
-          addressPrefix: subnetConfiguration.appServiceSubnet.addressPrefix
-          delegations: subnetConfiguration.appServiceSubnet.delegation == 'none' ? [] : [
+          addressPrefix: subnetConfiguration.appServicePrivateEndpointSubnet.addressPrefix
+          delegations: subnetConfiguration.appServicePrivateEndpointSubnet.delegation == 'none' ? [] : [
             {
-              name: subnetConfiguration.appServiceSubnet.delegation
+              name: subnetConfiguration.appServicePrivateEndpointSubnet.delegation
               properties: {
-                serviceName: subnetConfiguration.appServiceSubnet.delegation
+                serviceName: subnetConfiguration.appServicePrivateEndpointSubnet.delegation
               }
             }
           ]
+        }
+      }
+      {
+        name: subnetConfiguration.appServiceVnetIntegrationSubnet.name
+        properties: {
+          addressPrefix: subnetConfiguration.appServiceVnetIntegrationSubnet.addressPrefix
+          delegations: [
+            {
+              name: subnetConfiguration.appServiceVnetIntegrationSubnet.delegation
+              properties: {
+                serviceName: subnetConfiguration.appServiceDelegation
+              }
+            }
+          ]
+        
         }
       }
       {
@@ -73,9 +72,6 @@ resource vnet 'Microsoft.Network/virtualNetworks@2023-09-01' = {
               }
             }
           ]
-          // networkSecurityGroup: {
-          //   id: keyVaultNsgResourceId
-          // }
         }
       }
       {
@@ -118,4 +114,8 @@ resource vnet 'Microsoft.Network/virtualNetworks@2023-09-01' = {
 
 output id string = vnet.id
 output name string = vnet.name
-output servicesSubnetId string = vnet.properties.subnets[1].id
+output appServicePrivateEndpointSubnetId string = filter(vnet.properties.subnets, subnet => subnet.name == subnetConfiguration.appServicePrivateEndpointSubnet.name)[0].id
+output appServiceVnetIntegrationSubnetId string = filter(vnet.properties.subnets, subnet => subnet.name == subnetConfiguration.appServiceVnetIntegrationSubnet.name)[0].id
+output servicesSubnetId string = filter(vnet.properties.subnets, subnet => subnet.name == subnetConfiguration.servicesSubnet.name)[0].id
+output apimSubnetId string = filter(vnet.properties.subnets, subnet => subnet.name == subnetConfiguration.apimSubnet.name)[0].id
+output appGwSubnetId string = filter(vnet.properties.subnets, subnet => subnet.name == subnetConfiguration.appGwSubnet.name)[0].id

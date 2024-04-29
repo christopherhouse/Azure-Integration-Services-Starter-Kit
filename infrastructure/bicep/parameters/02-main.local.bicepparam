@@ -1,4 +1,6 @@
 using '../02-main.bicep'
+import * as udt from '../types.bicep'
+
 import * as apimTypes from '../modules/apiManagement/apiManagementService.bicep'
 import * as eventHubTypes from '../modules/eventHub/eventHubNamespace.bicep'
 import * as serviceBusTypes from '../modules/serviceBus/serviceBusNamespace.bicep'
@@ -13,6 +15,7 @@ param tags = {
   Project_Name: 'AIS Stater Kit'
 }
 param subnetConfigurations = {
+  appServiceDelegation: 'Microsoft.Web/serverFarms'
   apimSubnet: {
     addressPrefix: '10.254.0.248/29'
     delegation: 'none'
@@ -23,10 +26,15 @@ param subnetConfigurations = {
     delegation: 'none'
     name: 'appgw-subnet'
   }
-  appServiceSubnet: {
-    addressPrefix: '10.254.0.64/26'
+  appServicePrivateEndpointSubnet: {
+    addressPrefix: '10.254.0.64/27'
     delegation: 'Microsoft.Web/hostingEnvironments'
-    name: 'appservice-subnet'
+    name: 'appservice-private-endpoint-subnet'
+  }
+  appServiceVnetIntegrationSubnet: {
+    addressPrefix: '10.254.0.96/27'
+    delegation: 'none'
+    name: 'appservice-vnet-integration-subnet'
   }
   servicesSubnet: {
     addressPrefix: '10.254.0.192/27'
@@ -34,6 +42,7 @@ param subnetConfigurations = {
     name: 'services-subnet'
   }
 }
+
 param apimConfiguration = {
   deployApim: 'yes'
   serviceProperties: {
@@ -72,3 +81,18 @@ param acrConfiguration = {
     enableZoneRedundancy: false
   }
 }
+param appServicePlansConfiguration = {
+  deployAppServicePlans: 'yes'
+  serviceProperties: {
+    useAppServiceEnvironment: false
+    plans: [
+      {
+        planName: 'ais-sk-loc-asp'
+        skuCapacity: 1
+        sku: 'P0v3'
+        zoneRedundant: false
+      }
+    ]
+  }
+}
+param keyVaultName = 'ais-sk-loc-kv'
