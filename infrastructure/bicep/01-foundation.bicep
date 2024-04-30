@@ -85,12 +85,25 @@ module appGwNsg './modules/networkSecurityGroup/applicationGatewayNetworkSecurit
   }
 }
 
+module appSvcInNsg './modules/networkSecurityGroup/appServiceInboundNetworkSecurityGroup.bicep' = {
+  name: 'appSvcInNsg-${deploymentName}'
+  params: {
+    apimSubnetRange: subnetConfigurations.apimSubnet.addressPrefix
+    appServiceInboundSubnetRange: subnetConfigurations.appServicePrivateEndpointSubnet.addressPrefix
+    logAnalyticsWorkspaceId: law.outputs.id
+    networkSecurityGroupName: names.outputs.appServiceInboundNsgName
+    region: region
+    tags: tags
+  }
+}
+
 module vnet './modules/virtualNetwork/virtualNetwork.bicep' = {
   name: 'vnet-${deploymentName}'
   params: {
     addressPrefixes: virtualNetworkAddressSpaces
     apimNsgResourceId: apimNsg.outputs.id
     appGwNsgResourceId: appGwNsg.outputs.id
+    appServiceInboundNsgResourceId: appSvcInNsg.outputs.id
     subnetConfiguration: subnetConfigurations
     region: region
     virtualNetworkName: names.outputs.vnetName

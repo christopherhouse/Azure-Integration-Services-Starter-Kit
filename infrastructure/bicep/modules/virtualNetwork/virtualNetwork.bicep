@@ -18,6 +18,9 @@ param apimNsgResourceId string
 @description('The resource ID of the network security group to associate with the API Management subnet')
 param appGwNsgResourceId string
 
+@description('The resource ID of the network security group to associate with the App Service Inbound subnet')
+param appServiceInboundNsgResourceId string
+
 @description('The tags to associate with the API Center resource')
 param tags object = {}
 
@@ -42,6 +45,9 @@ resource vnet 'Microsoft.Network/virtualNetworks@2023-09-01' = {
               }
             }
           ]
+          networkSecurityGroup: {
+            id: appServiceInboundNsgResourceId
+          }
         }
       }
       {
@@ -68,7 +74,6 @@ resource vnet 'Microsoft.Network/virtualNetworks@2023-09-01' = {
               name: subnetConfiguration.servicesSubnet.delegation
               properties: {
                 serviceName: subnetConfiguration.servicesSubnet.delegation
-  
               }
             }
           ]
