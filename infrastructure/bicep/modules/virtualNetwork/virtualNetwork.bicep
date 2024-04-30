@@ -15,10 +15,19 @@ param subnetConfiguration udt.subnetConfigurationsType
 @description('The resource ID of the network security group to associate with the API Management subnet')
 param apimNsgResourceId string
 
-@description('The resource ID of the network security group to associate with the API Management subnet')
+@description('The resource ID of the network security group to associate with the App Gateway subnet')
 param appGwNsgResourceId string
 
-@description('The tags to associate with the API Center resource')
+@description('The resource ID of the network security group to associate with the App Service Inbound subnet')
+param appServiceInboundNsgResourceId string
+
+@description('The resource ID of the network security group to associate with the App Service Outbound subnet')
+param appServiceOutboundNsgResourceId string
+
+@description('The resource ID of the network security group to associate with the Services subnet')
+param servicesNsgResourceId string
+
+@description('The tags to associate with the NSG resource')
 param tags object = {}
 
 resource vnet 'Microsoft.Network/virtualNetworks@2023-09-01' = {
@@ -42,6 +51,9 @@ resource vnet 'Microsoft.Network/virtualNetworks@2023-09-01' = {
               }
             }
           ]
+          networkSecurityGroup: {
+            id: appServiceInboundNsgResourceId
+          }
         }
       }
       {
@@ -56,7 +68,9 @@ resource vnet 'Microsoft.Network/virtualNetworks@2023-09-01' = {
               }
             }
           ]
-        
+          networkSecurityGroup: {
+            id: appServiceOutboundNsgResourceId
+          }        
         }
       }
       {
@@ -68,10 +82,12 @@ resource vnet 'Microsoft.Network/virtualNetworks@2023-09-01' = {
               name: subnetConfiguration.servicesSubnet.delegation
               properties: {
                 serviceName: subnetConfiguration.servicesSubnet.delegation
-  
               }
             }
           ]
+          networkSecurityGroup: {
+            id: servicesNsgResourceId
+          }
         }
       }
       {

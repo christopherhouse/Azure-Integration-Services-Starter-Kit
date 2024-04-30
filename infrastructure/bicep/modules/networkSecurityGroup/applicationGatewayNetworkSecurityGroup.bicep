@@ -72,7 +72,24 @@ resource nsg 'Microsoft.Network/networkSecurityGroups@2023-09-01' = {
           sourceAddressPrefixes: []
           destinationAddressPrefixes: []
         }
-      }      
+      }
+      {
+        name: 'DenySSHRDPOutbound'
+        properties: {
+          priority: 3000
+          protocol: 'TCP'
+          sourcePortRange: '*'
+          destinationPortRanges: [
+            '22'
+            '3389'
+          ]
+          sourceAddressPrefix: 'VirtualNetwork'
+          destinationAddressPrefix: '*'
+          access: 'Deny'
+          direction: 'Outbound'
+          description: 'Deny Management traffic outbound'
+        }
+      }     
       {
         name: 'DenyVNetInbound'
         properties: {

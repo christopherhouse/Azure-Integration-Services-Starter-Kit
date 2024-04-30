@@ -10,11 +10,8 @@ param logAnalyticsWorkspaceId string
 @description('The subnet range for the API Management subnet')
 param apimSubnetRange string
 
-@description('The subnet range for the Application Gateway subnet')
-param appGatewaySubnetRange string
-
 @description('The subnet range for the Key Vault subnet')
-param keyVaultSubnetRange string
+param appServiceInboundSubnetRange string
 
 @description('The tags to associate with the API Center resource')
 param tags object = {}
@@ -41,20 +38,17 @@ resource nsg 'Microsoft.Network/networkSecurityGroups@2023-09-01' = {
         }
       }
       {
-        name: 'AllowAPIMandAppGWtoKeyVault'
+        name: 'AllowAPIMToAppServiceInbound'
         properties: {
           priority: 200
           protocol:'Tcp'
           sourcePortRange: '*'
           destinationPortRange: '443'
-          sourceAddressPrefixes: [
-            appGatewaySubnetRange
-            apimSubnetRange
-          ]
-          destinationAddressPrefix: keyVaultSubnetRange
+          sourceAddressPrefix: apimSubnetRange
+          destinationAddressPrefix: appServiceInboundSubnetRange
           access: 'Allow'
           direction: 'Inbound'
-          description: 'Allow HTTPS from APIM subnet to KeyVault subnet'
+          description: 'Allow HTTPS from APIM subnet to AppService Inbound Subnet'
         }
       }
       {
@@ -71,6 +65,23 @@ resource nsg 'Microsoft.Network/networkSecurityGroups@2023-09-01' = {
           description: 'Deny all inbound traffic within the VNet'
         }
       }
+      {
+        name: 'DenySSHRDPOutbound'
+        properties: {
+          priority: 3000
+          protocol: 'TCP'
+          sourcePortRange: '*'
+          destinationPortRanges: [
+            '22'
+            '3389'
+          ]
+          sourceAddressPrefix: 'VirtualNetwork'
+          destinationAddressPrefix: '*'
+          access: 'Deny'
+          direction: 'Outbound'
+          description: 'Deny Management traffic outbound'
+        }
+      }        
     ]
   }
 }
