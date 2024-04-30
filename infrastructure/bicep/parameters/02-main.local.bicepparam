@@ -96,3 +96,12 @@ param appServicePlansConfiguration = {
   }
 }
 param keyVaultName = 'ais-sk-loc-kv'
+param logicAppDeploymentConfiguration = {
+  deployLogicApps: 'yes'
+  logicApps: [
+    {
+      logicAppName: 'foo'
+      appServicePlanName: 'bar'
+    }
+  ]
+}

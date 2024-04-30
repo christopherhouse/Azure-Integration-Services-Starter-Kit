@@ -61,19 +61,6 @@ module apimNsg './modules/networkSecurityGroup/apimNetworkSecurityGroup.bicep' =
   }
 }
 
-module kvNsg './modules/networkSecurityGroup/keyVaultNetworkSecurityGroup.bicep' = {
-  name: 'kvNsg-${deploymentName}'
-  params: {
-    region: region
-    logAnalyticsWorkspaceId: law.outputs.id
-    apimSubnetRange: subnetConfigurations.apimSubnet.addressPrefix
-    appGatewaySubnetRange: subnetConfigurations.appGwSubnet.addressPrefix
-    keyVaultSubnetRange: subnetConfigurations.servicesSubnet.addressPrefix
-    networkSecurityGroupName: names.outputs.keyVaultNsgName
-    tags: tags
-  }
-}
-
 module appGwNsg './modules/networkSecurityGroup/applicationGatewayNetworkSecurityGroup.bicep' = {
   name: 'appGwNsg-${deploymentName}'
   params: {
@@ -85,12 +72,51 @@ module appGwNsg './modules/networkSecurityGroup/applicationGatewayNetworkSecurit
   }
 }
 
+module appSvcInNsg './modules/networkSecurityGroup/appServiceInboundNetworkSecurityGroup.bicep' = {
+  name: 'appSvcInNsg-${deploymentName}'
+  params: {
+    apimSubnetRange: subnetConfigurations.apimSubnet.addressPrefix
+    appServiceInboundSubnetRange: subnetConfigurations.appServicePrivateEndpointSubnet.addressPrefix
+    logAnalyticsWorkspaceId: law.outputs.id
+    networkSecurityGroupName: names.outputs.appServiceInboundNsgName
+    region: region
+    tags: tags
+  }
+}
+
+module appSvcOutNsg './modules/networkSecurityGroup/appServiceOutboundNetworkSecurityGroup.bicep' = {
+  name: 'appSvcOutNsg-${deploymentName}'
+  params: {
+    logAnalyticsWorkspaceId: law.outputs.id
+    networkSecurityGroupName: names.outputs.appServiceOutboundNsgName
+    region: region
+    tags: tags
+  }
+}
+
+module svcsNsg './modules/networkSecurityGroup/servicesNetworkSecurityGroup.bicep' = {
+  name: 'svcsNsg-${deploymentName}'
+  params: {
+    appGatewaySubnetRange: subnetConfigurations.appGwSubnet.addressPrefix
+    apimSubnetRange: subnetConfigurations.apimSubnet.addressPrefix
+    appServiceOutboundSubnetRange: subnetConfigurations.appServiceVnetIntegrationSubnet.addressPrefix
+    servicesSubnet: subnetConfigurations.servicesSubnet.addressPrefix
+    logAnalyticsWorkspaceId: law.outputs.id
+    networkSecurityGroupName: names.outputs.servicesNsgName
+    region: region
+    tags: tags
+  }
+}
+
 module vnet './modules/virtualNetwork/virtualNetwork.bicep' = {
   name: 'vnet-${deploymentName}'
   params: {
     addressPrefixes: virtualNetworkAddressSpaces
     apimNsgResourceId: apimNsg.outputs.id
     appGwNsgResourceId: appGwNsg.outputs.id
+    appServiceInboundNsgResourceId: appSvcInNsg.outputs.id
+    appServiceOutboundNsgResourceId: appSvcOutNsg.outputs.id
+    servicesNsgResourceId: svcsNsg.outputs.id
     subnetConfiguration: subnetConfigurations
     region: region
     virtualNetworkName: names.outputs.vnetName

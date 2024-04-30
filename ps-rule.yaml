@@ -1,0 +1,2 @@
+configuration:
+  AZURE_BICEP_PARAMS_FILE_EXPANSION: false

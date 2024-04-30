@@ -11,11 +11,15 @@ output vnetName string = vnetName
 // NSGs
 var apimNsgName = '${workloadName}-${environmentName}-apim-nsg'
 var appGwNsgName = '${workloadName}-${environmentName}-appgw-nsg'
-var keyVaultNsgName = '${workloadName}-${environmentName}-kv-nsg'
+var appServiceInboundNsgName = '${workloadName}-${environmentName}-appservice-in-nsg'
+var appServiceOutboundNsgName = '${workloadName}-${environmentName}-appservice-out-nsg'
+var servicesNsgName = '${workloadName}-${environmentName}-services-nsg'
 
 output apimNsgName string = apimNsgName
 output appGwNsgName string = appGwNsgName
-output keyVaultNsgName string = keyVaultNsgName
+output appServiceInboundNsgName string = appServiceInboundNsgName
+output appServiceOutboundNsgName string = appServiceOutboundNsgName
+output servicesNsgName string = servicesNsgName
 
 // Log Analytics
 var logAnalyticsWorkspaceName = '${workloadName}-${environmentName}-law'
