@@ -13,8 +13,10 @@ param apimSubnetRange string
 @description('The subnet range for the Application Gateway subnet')
 param appGatewaySubnetRange string
 
-@description('The subnet range for the Key Vault subnet')
-param keyVaultSubnetRange string
+param appServiceOutboundSubnetRange string
+
+@description('The subnet range for the services subnet')
+param servicesSubnet string
 
 @description('The tags to associate with the API Center resource')
 param tags object = {}
@@ -41,17 +43,21 @@ resource nsg 'Microsoft.Network/networkSecurityGroups@2023-09-01' = {
         }
       }
       {
-        name: 'AllowAPIMandAppGWtoKeyVault'
+        name: 'AllowAPIMandAppGWAndAppsToKeyVault'
         properties: {
           priority: 200
           protocol:'Tcp'
           sourcePortRange: '*'
-          destinationPortRange: '443'
+          destinationPortRanges: [
+            '443'
+            '5671-5672'
+          ]
           sourceAddressPrefixes: [
             appGatewaySubnetRange
             apimSubnetRange
+            appServiceOutboundSubnetRange
           ]
-          destinationAddressPrefix: keyVaultSubnetRange
+          destinationAddressPrefix: servicesSubnet
           access: 'Allow'
           direction: 'Inbound'
           description: 'Allow HTTPS from APIM subnet to KeyVault subnet'
